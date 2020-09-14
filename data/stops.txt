@@ -1,0 +1,2 @@
+stops.geojson extracted from the Amtrak GTFS contained within amtrak.zip, downloaded from https://transit.land/feed-registry/operators/o-9-amtrak
+Amtrak GTFS dated November 21, 2019
