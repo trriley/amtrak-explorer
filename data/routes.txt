@@ -1,2 +1,0 @@
-routes.geojson retrieved from Transitland Datastore API - https://transit.land/feed-registry/operators/o-9-amtrak
-Based on Amtrak GTFS dated November 21, 2019
