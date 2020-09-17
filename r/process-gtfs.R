@@ -15,6 +15,10 @@ invisible(lapply(packages, library, character.only = TRUE))
 
 # throws a "parsing failures while reading agency" error,
 # should not significantly impact output
-amtrak <- read_gtfs("./data/amtrak.zip")
-amtrakStops <- stops_as_sf(amtrak$stops) %>%
-  write_sf("./data/stops.geojson")
+amtrak <- read_gtfs("./data/transitland/amtrak.zip")
+departureDate <- "2018-09-04" 
+departureTime <- "06:00:00"
+maxArrivalTime <- "96:00:00"
+stopTimes <- filter_stop_times(amtrak, departureDate, departureTime, maxArrivalTime)
+stopName <- "Chicago Union Station Amtrak"
+travel_times(stopTimes, stopName, 36000)

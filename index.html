@@ -9,7 +9,27 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
     integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
     crossorigin="" />
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans|Ubuntu:700" rel="stylesheet">
   <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #222;
+      font-family: 'Open Sans', sans-serif;
+      color: #ddd;
+    }
+
+    h1 {
+      display: inline-block;
+      margin-right: 20px;
+      Font-Family: 'Ubuntu', Sans-Serif;
+    }
+
+    h2 {
+      display: inline-block;
+      Font-Family: 'Ubuntu', Sans-Serif;
+    }
+
     #map {
       position: absolute;
       top: 0;
@@ -17,11 +37,125 @@
       width: 100%;
       background: rgba(63, 63, 63, 0.9); /* with transparency */
     }
+
+    a {
+      color: #004A8B;
+    }
+
+    a:hover {
+      color: rgb(67, 69, 71);
+      text-decoration: none;
+    }
+
+    .legend {
+      padding: 6px 8px;
+      font-size: 1em;
+      border: 2px solid rgba(244, 244, 244, 0.2);
+      background: rgba(100, 100, 100, 0.9);
+      color: rgba(244, 244, 244, 0.8);
+      border-radius: 5px;
+    }
+
+    .legend h3 {
+        font-size: 1.1em;
+        font-weight: bolder;
+        color: #ddd;
+        margin: 0 0 10px 0;
+        text-align: center;
+    }
+
+    .legend span {
+        width: 20px;
+        height: 20px;
+        float: left;
+        margin: 0 10px 4px 0;
+    }
+
+    .legend label {
+        font-size: 1.1em;
+    }
+
+    /* https://css-tricks.com/snippets/css/clear-fix/ */
+    .legend label:after {
+        content: '';
+        display: block;
+        clear: both;
+    }
+
+    .leaflet-bar a {
+      /* Override the default style for Leaflet's zoom  */
+      background: rgba(100, 100, 100, 0.9);
+      color: rgba(244, 244, 244, 0.8);
+    }
+
+    #info-button {
+        padding: 8px 5px;
+        font-size: 0.9em;
+        font-weight: bolder;
+        /* Style matches Leaflet controls */
+        border: 2px solid rgba(244, 244, 244, 0.2);
+        background: rgba(100, 100, 100, 0.9);
+        color: rgba(244, 244, 244, 0.8);
+        border-radius: 5px;
+        /* Position is fixed next to the zoom bar */
+        position: fixed;
+        top: 11px;
+        right: 52px;
+        /* Draw it on top of all elements */
+        z-index: 9999;
+        /* Cursor change on hover -- doesn't work on touch screensn */
+        cursor: pointer;
+    }
+
+    #footer {
+        width: 100%;
+        background: rgba(244, 244, 244, 0.8);
+        color: rgba(20, 20, 20, 0.8);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        height: 0px;
+        padding: 5px;
+        /* display below the button to allow clicking if overlay covers screen */
+        z-index: 9000;
+        position: absolute;
+        /*
+        Hide the footer be default. This should not contain too much information. Like to a new page for extended content.
+        */
+        bottom: -10px;
+        /* If too much is included, enable scroll */
+        overflow: scroll;
+    }
+
+    #footer div {
+        padding: 10px;
+    }
+
+    #footer h1 {
+        font-size: 1.3em;
+        margin: 0 0 5px 0;
+        Font-Family: 'Ubuntu', Sans-Serif;
+    }
+
+    .footer-img {
+        float: right;
+        height: 10vh;
+        margin: 10px;
+    }
   </style>
 </head>
 
 <body>
   <div id='map'></div>
+
+  <button id="info-button" onclick="infoButton()">Information</button>
+  <div id='footer'>
+    <h1>US Amtrak Explorer</h1>
+    <p>Created by Tim Riley</p>
+    <p>
+      This demo map application is an example of a utility that could be created
+      with a publicly-released Amtrak GTFS. For now, it uses a GTFS unofficially
+      generated using information from FOIA requests.
+    </p>
+  </div>
 
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
     integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
@@ -41,9 +175,11 @@
 
     const basemap = L.tileLayer(basemapURL, basemapAttributes).addTo(map);
 
-    drawRoutesLayer();
+    drawMapLayers();
+    // drawLegend();
+    map.addControl( L.control.zoom({ position: 'topright' }));
 
-    function drawRoutesLayer() {
+    function drawMapLayers() {
       fetch('data/routes.geojson')
         .then(function(response) {
           // console.log(response);
@@ -55,8 +191,18 @@
         })
         .then(function(data) {
           const routesLayer = L.geoJson(data, {
-            color: '#18567D', // approximation of amtrak express logo blue
-            // color: '#B31B1B', // approximation of 'amtrak red'
+            onEachFeature: function(feature, layer) {
+              let popup = `<h3>${layer.feature.properties.NAME}</h3>`;
+              layer.bindPopup(popup);
+            },
+            style: function(feature) {
+              return {
+                color: '#18567D', // approximation of amtrak express logo blue
+                // color: '#B31B1B', // approximation of 'amtrak red'
+                weight: 4,
+                opacity: .6
+              }
+            }
           }).addTo(map);
           const zoomExtent = routesLayer.getBounds();
           map.fitBounds(zoomExtent, { maxZoom: 10 });
@@ -87,9 +233,36 @@
                 fillOpacity: 1,
                 fillColor: '#003399' // approximation of 'amtrak blue'
               });
+            },
+            onEachFeature: function(feature, layer) {
+              let popup = `<h3>${layer.feature.properties.STNNAME}</h3>`;
+              layer.bindPopup(popup);
             }
           }).addTo(map);
         });
+    }
+
+    function drawLegend() {
+      const legend = L.control( { position: 'topleft' } );
+
+      legend.onAdd = function() {}
+
+      legend.addTo(map);
+    }
+
+    // toggle on/off info button
+    let clicked = false
+    function infoButton() {
+      let x = document.getElementById('footer');
+      let y = document.getElementById('info-button');
+      if (clicked) {
+          y.style.background = 'rgba(100, 100, 100, 0.9)'; // gray button
+          x.style.height = '0px'; // no footer height
+      } else {
+          y.style.background = 'rgba(146, 239, 146, 0.8)' // green button
+          x.style.height = '33vh';  // footer 33% of viewport height
+      }
+      clicked = !clicked
     }
   </script>
 
