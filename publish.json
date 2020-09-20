@@ -1,0 +1,8 @@
+
+{
+    "title": "Amtrak Explorer",
+    "info": "Visualization of travel times between Amtrak stations",
+    "coordinates": [39.83, -98.58],
+    "author": "Tim Riley",
+    "link": "https://trriley.github.io/amtrak-explorer/"
+}
