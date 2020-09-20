@@ -62,13 +62,18 @@
         color: #ddd;
         margin: 0 0 10px 0;
         text-align: center;
+        font-family: 'Ubuntu', Sans-Serif;
     }
 
     .legend span {
-        width: 20px;
-        height: 20px;
+        width: 15px;
+        height: 15px;
         float: left;
         margin: 0 10px 4px 0;
+        border-radius: 50%;
+        /* use box-shadow: inset instead of border: to constrain the symbol size
+        to the width/height setting */
+        box-shadow: inset 0px 0px 0px 1px rgba(255, 255, 255)
     }
 
     .legend label {
@@ -105,6 +110,10 @@
         z-index: 9999;
         /* Cursor change on hover -- doesn't work on touch screensn */
         cursor: pointer;
+    }
+
+    #popup-button {
+
     }
 
     #footer {
@@ -151,13 +160,16 @@
     <h1>US Amtrak Explorer</h1>
     <p>Created by Tim Riley</p>
     <p>
-      This demo map application is an example of a utility that could be created
-      with a publicly-released Amtrak GTFS. For now, it uses a GTFS unofficially
-      generated using information from FOIA requests.
+      This demo map application uses <a href="https://osav-usdot.opendata.arcgis.com/datasets/3e9daf681b154fb19372044f4d52941a_0">
+      official Amtrak geodata</a> and an <a href="https://transit.land/feed-registry/operators/o-9-amtrak">
+      unofficial Amtrak GTFS file</a> to visualize the commuter rail network and estimate
+      minimum possible travel times between stations.
     </p>
     <p>
       Schedule information based on a travel date of Tuesday, September 4th, 2018.
-      Stations which operate only a few times a week may be missing schedule information.
+      Some stations operate on a less than daily frequency, which may result in
+      no schedule information being found.
+      Travel times calculated in R using tidytransit package.
     </p>
   </div>
 
@@ -197,6 +209,10 @@
 
     let timeTable = null;
 
+    // instantiate legend object globally so it can persist between calls of
+    // drawLegend();
+    const legend = L.control( { position: 'topleft' } );
+
     fetch('data/tts/tts.json')
       .then(function(response) {
         if (response.ok) {
@@ -222,7 +238,8 @@
         .then(function(data) {
           amtrakLayers["routesLayer"] = L.geoJson(data, {
             onEachFeature: function(feature, layer) {
-              let popup = `<h3>${layer.feature.properties.NAME}</h3>`;
+              let popup = `<h3>${layer.feature.properties.NAME}</h3>
+              `;
               layer.bindPopup(popup);
             },
             style: function(feature) {
@@ -295,11 +312,17 @@
     }
 
     function getTimeTables() {
-      console.log(`${activeStop.feature.properties.STNNAME}`);
       const props = activeStop.feature.properties;
       const dataLayer = amtrakLayers["stopsLayer"];
-      const breaks = getClassBreaks(timeTable["travel_time"]);
-      // console.log(breaks);
+      // const breaks = getClassBreaks(timeTable["travel_time"]);
+      const breaks = [
+        [120, 28560],
+        [28620, 60480],
+        [60540, 101040],
+        [101100, 155280],
+        [155340, 266640]
+      ];
+
 
       // console.log(timeTable);
       let filteredTable = {
@@ -356,12 +379,18 @@
       if (checkAnyMatch === 0) {
         console.log("no matches found");
       } else {
-        drawLegend(props, breaks);
+        // // check if legend already exists
+        // if () {
+        //   updateLegend();
+        // } else {
+          drawLegend(props, breaks);
+        // }
       }
     }
 
     function drawLegend(props, breaks) {
-      const legend = L.control( { position: 'topleft' } );
+      // const legend = L.control( { position: 'topleft' } );
+      legend.remove();
 
       legend.onAdd = function() {
         const div = L.DomUtil.create('div', 'legend');
@@ -372,15 +401,22 @@
           const color = getColor(breaks[i][0], breaks);
 
           div.innerHTML +=
-            `<span style=""></span>
-            <label>${(breaks[i][0]).toLocaleString()} &mdash;
-            ${(breaks[i][1]).toLocaleString()}</label>`;
+            `<span style="background:${color}"></span>
+            <label>${convertTimes(breaks[i][0])} &mdash;
+            ${convertTimes(breaks[i][1])}</label>`;
         }
+        div.innerHTML +=
+          `<span></span>
+          <label>No travel time found</label>`
 
         return div;
       }
 
       legend.addTo(map);
+    }
+
+    function updateLegend(legend) {
+
     }
 
     function convertTimes(travelTime) {
@@ -394,30 +430,21 @@
     }
 
     function getClassBreaks(dataSet) {
-
-      // create empty Array for storing values
+      // --------------deprecated------------
+      // this means of returning class breaks takes a long time to
+      // process (~60 seconds) with so many records. class breaks defined
+      // manually within getTimeTables() instead
       const values = [];
-
-      // loop through all the counties
       for (value of dataSet) {
-        // console.log(value);
         if (value > 0) {
           values.push(value);
-        } else {
-          // console.log(`${props.NAME}, ${props[attributeValue]}`)
         }
       }
-
-      // console.log(values);
-      // determine similar clusters
       const clusters = ss.ckmeans(values, 5);
-
-      // create an array of the lowest value within each cluster
       const breaks = clusters.map(function(cluster){
         return [cluster[0],cluster.pop()];
       });
-
-      return breaks; // return Array of class breaks
+      return breaks;
     }
 
     function getColor(d, breaks) {
