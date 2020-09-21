@@ -182,7 +182,12 @@
     </script>
 
   <script>
-    const options = { zoomSnap: .1, zoomControl: false }
+    const options = {
+      zoomSnap: .1,
+      zoomControl: false,
+      minZoom: 4,
+      maxZoom: 12
+    }
     const map = L.map('map', options);
 
     const basemapURL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
@@ -284,7 +289,6 @@
             onEachFeature: function(feature, layer) {
               const props = layer.feature.properties
               let popup = `<h3>${props.STNNAME}</h3>
-                ${props.STNCODE}
                 <button id="popup-button" onClick="getTimeTables()">Get Travel Times</button>`;
               layer.bindPopup(popup);
               layer.on('click', function() {
@@ -305,7 +309,8 @@
           y.style.background = 'rgba(100, 100, 100, 0.9)'; // gray button
           x.style.height = '0px'; // no footer height
       } else {
-          y.style.background = 'rgba(146, 239, 146, 0.8)' // green button
+          // y.style.background = 'rgba(146, 239, 146, 0.8)' // green button
+          y.style.background = 'rgba(146, 146, 239, 0.8)' // blue button
           x.style.height = '33vh';  // footer 33% of viewport height
       }
       clicked = !clicked
@@ -316,11 +321,11 @@
       const dataLayer = amtrakLayers["stopsLayer"];
       // const breaks = getClassBreaks(timeTable["travel_time"]);
       const breaks = [
-        [120, 28560],
-        [28620, 60480],
-        [60540, 101040],
-        [101100, 155280],
-        [155340, 266640]
+        [120, 21600],     // 6 hrs
+        [21601, 43200],   // 12 hrs
+        [43201, 86400],  // 24 hrs
+        [86401, 172800], // 48 hrs
+        [172801, 345600]  // 96 hrs
       ];
 
 
@@ -400,14 +405,24 @@
         for (let i = 0; i < breaks.length; i++) {
           const color = getColor(breaks[i][0], breaks);
 
-          div.innerHTML +=
-            `<span style="background:${color}"></span>
-            <label>${convertTimes(breaks[i][0])} &mdash;
-            ${convertTimes(breaks[i][1])}</label>`;
+          if (i == 0) {
+            div.innerHTML +=
+              `<span style="background:${color}"></span>
+              <label>6 hours and under</label>`
+          } else if (i == 4) {
+            div.innerHTML +=
+              `<span style="background:${color}"></span>
+              <label>Over 48 hours</label>`
+          } else {
+            div.innerHTML +=
+              `<span style="background:${color}"></span>
+              <label>${convertTimes(breaks[i][0])} &mdash;
+              ${convertTimes(breaks[i][1])}</label>`;
+          }
         }
         div.innerHTML +=
           `<span></span>
-          <label>No travel time found</label>`
+          <label>No travel time found</label>`;
 
         return div;
       }
@@ -422,10 +437,18 @@
     function convertTimes(travelTime) {
       const hours = Math.floor(travelTime / 3600);
       const minutes = Math.floor((travelTime % 3600) / 60);
-      if (hours) {
-        return `${hours} hours, ${minutes} minutes`;
+      if (minutes) {
+        if (hours) {
+          return `${hours} hours, ${minutes} minutes`;
+        } else {
+          return `${minutes} minutes`;
+        }
       } else {
-        return `${minutes} minutes`;
+        if (hours) {
+          return `${hours} hours`;
+        } else {
+          return `< 1 minute`;
+        }
       }
     }
 
