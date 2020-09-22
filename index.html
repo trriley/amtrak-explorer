@@ -93,6 +93,8 @@
       color: rgba(244, 244, 244, 0.8);
     }
 
+    .leaflet-popup-
+
     .leaflet-popup-content {
       font-family: 'Open Sans', sans-serif;
     }
@@ -103,26 +105,27 @@
 
     #info-button {
         padding: 8px 5px;
-        font-size: 0.9em;
+        font-size: 1em;
         font-weight: bolder;
         /* Style matches Leaflet controls */
         border: 2px solid rgba(244, 244, 244, 0.2);
         background: rgba(100, 100, 100, 0.9);
         color: rgba(244, 244, 244, 0.8);
         border-radius: 5px;
-        /* Position is fixed next to the zoom bar */
-        position: fixed;
-        top: 11px;
-        right: 52px;
+        position: relative;
+        top: 10px;
+        left: 10px;
         /* Draw it on top of all elements */
         z-index: 9999;
         /* Cursor change on hover -- doesn't work on touch screensn */
         cursor: pointer;
+        pointer-events: auto;
     }
 
-    #popup-button {
+    /* the popup, and the button within, could use some nicer styling. however,
+    I simply ran out of time. */
+    /* #popup-button {} */
 
-    }
 
     #footer {
         width: 100%;
@@ -161,9 +164,9 @@
 </head>
 
 <body>
-  <div id='map'></div>
-
-  <button id="info-button" onclick="infoButton()">Information</button>
+  <div id='map'>
+    <button id="info-button" onclick="infoButton()" class="leaflet-control">Information</button>
+  </div>
   <div id='footer'>
     <h1>US Amtrak Explorer</h1>
     <p>Created by Tim Riley</p>
@@ -391,17 +394,12 @@
       if (checkAnyMatch === 0) {
         console.log("no matches found");
       } else {
-        // // check if legend already exists
-        // if () {
-        //   updateLegend();
-        // } else {
-          drawLegend(props, breaks);
-        // }
+        drawLegend(props, breaks);
       }
     }
 
     function drawLegend(props, breaks) {
-      // const legend = L.control( { position: 'topleft' } );
+
       legend.remove();
 
       legend.onAdd = function() {
@@ -413,6 +411,7 @@
           const color = getColor(breaks[i][0], breaks);
 
           if (i == 0) {
+            // don't want the "0 --" part of the first entry
             div.innerHTML +=
               `<span style="background:${color}"></span>
               <label>6 hours and under</label>`
@@ -421,6 +420,7 @@
               `<span style="background:${color}"></span>
               <label>Over 48 hours</label>`
           } else {
+            // like the first entry, I don't want this to show the full range
             div.innerHTML +=
               `<span style="background:${color}"></span>
               <label>${convertTimes(breaks[i][0])} &mdash;
@@ -431,14 +431,16 @@
           `<span></span>
           <label>No travel time found</label>`;
 
+        // this is *probably* bad practice, and ought to be replaced with a
+        // 'cleaner' method of moving the button.
+        // I experimented with trying to add it into the leaflet-control-container
+        // div, but ran out of time
+        document.getElementById('info-button').style="top:179px";
+
         return div;
       }
 
       legend.addTo(map);
-    }
-
-    function updateLegend(legend) {
-
     }
 
     function convertTimes(travelTime) {
