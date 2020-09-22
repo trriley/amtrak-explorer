@@ -93,6 +93,14 @@
       color: rgba(244, 244, 244, 0.8);
     }
 
+    .leaflet-popup-content {
+      font-family: 'Open Sans', sans-serif;
+    }
+
+    .leaflet-popup-content h3 {
+      font-weight: normal;
+    }
+
     #info-button {
         padding: 8px 5px;
         font-size: 0.9em;
@@ -243,7 +251,7 @@
         .then(function(data) {
           amtrakLayers["routesLayer"] = L.geoJson(data, {
             onEachFeature: function(feature, layer) {
-              let popup = `<h3>${layer.feature.properties.NAME}</h3>
+              let popup = `<h3>Route:<b> ${layer.feature.properties.NAME}</b></h3>
               `;
               layer.bindPopup(popup);
             },
@@ -288,7 +296,7 @@
             },
             onEachFeature: function(feature, layer) {
               const props = layer.feature.properties
-              let popup = `<h3>${props.STNNAME}</h3>
+              let popup = `<h3>Station:<b> ${props.STNNAME}</b></h3>
                 <button id="popup-button" onClick="getTimeTables()">Get Travel Times</button>`;
               layer.bindPopup(popup);
               layer.on('click', function() {
@@ -361,7 +369,7 @@
               opacity: 1
             });
             const props = layer.feature.properties
-            let popup = `<h3>${props.STNNAME}</h3>
+            let popup = `<h3>Station:<b> ${props.STNNAME}</b></h3>
               <button id="popup-button" onClick="getTimeTables()">Get Travel Times</button>
               <p>Travel time: ${convertTimes(travelTime)}</p>`;
             layer.bindPopup(popup);
@@ -374,8 +382,7 @@
             opacity: .7
           });
           const props = layer.feature.properties
-          let popup = `<h3>${props.STNNAME}</h3>
-            ${props.STNCODE}
+          let popup = `<h3>Station:<b> ${props.STNNAME}</b></h3>
             <button id="popup-button" onClick="getTimeTables()">Get Travel Times</button>
             <p>Travel time unavailable</p>`;
           layer.bindPopup(popup);
